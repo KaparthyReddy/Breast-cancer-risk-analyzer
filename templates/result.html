@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction Results - Breast Cancer Predictor{% endblock %}
+
+{% block head %}
+<style>
+    .result-card {
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: none;
+        overflow: hidden;
+    }
+    
+    .benign-result {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border-left: 5px solid #28a745;
+    }
+    
+    .malignant-result {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        border-left: 5px solid #dc3545;
+    }
+    
+    .confidence-bar {
+        height: 25px;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .confidence-fill {
+        height: 100%;
+        border-radius: 12px;
+        transition: width 1.5s ease-in-out;
+        position: relative;
+    }
+    
+    .confidence-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .feature-importance {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+    }
+    
+    .recommendation-card {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-radius: 10px;
+        border-left: 4px solid #2196f3;
+    }
+    
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .result-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+    }
+    
+    .metric-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Results Header -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-12">
+                <h1 class="display-4 fw-bold text-primary mb-3">
+                    <i class="fas fa-chart-line me-3"></i>Analysis Results
+                </h1>
+                <p class="lead text-muted">Based on the provided cellular measurements</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Results Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <!-- Primary Result Card -->
+                <div class="card result-card mb-4 {% if prediction == 'Benign' %}benign-result{% else %}malignant-result{% endif %}">
+                    <div class="card-body text-center py-5">
+                        {% if prediction == 'Benign' %}
+                            <i class="fas fa-check-circle result-icon text-success pulse-animation"></i>
+                            <h2 class="display-5 fw-bold text-success mb-3">BENIGN</h2>
+                            <p class="lead text-success-emphasis mb-4">
+                                The analysis indicates a <strong>low probability</strong> of malignancy.
+                                The cellular characteristics suggest benign tissue.
+                            </p>
+                        {% else %}
+                            <i class="fas fa-exclamation-triangle result-icon text-danger pulse-animation"></i>
+                            <h2 class="display-5 fw-bold text-danger mb-3">MALIGNANT</h2>
+                            <p class="lead text-danger-emphasis mb-4">
+                                The analysis indicates a <strong>high probability</strong> of malignancy.
+                                Immediate medical consultation is strongly recommended.
+                            </p>
+                        {% endif %}
+                        
+                        <!-- Confidence Level -->
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <h5 class="mb-3">Prediction Confidence</h5>
+                                <div class="confidence-bar bg-light mb-3">
+                                    <div class="confidence-fill {% if prediction == 'Benign' %}bg-success{% else %}bg-danger{% endif %}" 
+                                         data-confidence="{{ confidence }}">
+                                        <span class="confidence-text">{{ "%.1f"|format(confidence) }}%</span>
+                                    </div>
+                                </div>
+                                <p class="small text-muted">
+                                    Model confidence in this prediction
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Metrics -->
+                <div class="row g-4 mb-5">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <i class="fas fa-microscope text-primary mb-3" style="font-size: 2rem;"></i>
+                            <h6 class="text-muted mb-2">Analysis Type</h6>
+                            <h4 class="fw-bold">Cell Nucleus</h4>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <i class="fas fa-brain text-info mb-3" style="font-size: 2rem;"></i>
+                            <h6 class="text-muted mb-2">Algorithm</h6>
+                            <h4 class="fw-bold">ML Model</h4>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <i class="fas fa-clock text-warning mb-3" style="font-size: 2rem;"></i>
+                            <h6 class="text-muted mb-2">Processing Time</h6>
+                            <h4 class="fw-bold">&lt; 1 sec</h4>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <i class="fas fa-shield-alt text-success mb-3" style="font-size: 2rem;"></i>
+                            <h6 class="text-muted mb-2">Data Security</h6>
+                            <h4 class="fw-bold">Protected</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations Section -->
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="recommendation-card p-4 h-100">
+                            <h4 class="fw-bold mb-3">
+                                <i class="fas fa-user-md me-2"></i>Medical Recommendations
+                            </h4>
+                            
+                            {% if prediction == 'Benign' %}
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Continue regular screening schedules
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Discuss results with your healthcare provider
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Maintain healthy lifestyle habits
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Schedule routine follow-up appointments
+                                    </li>
+                                </ul>
+                            {% else %}
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                        <strong>Urgent:</strong> Contact your doctor immediately
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                        Schedule comprehensive diagnostic testing
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                        Consider seeking a second medical opinion
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-exclamation-circle text-danger me-2"></i>
+                                        Begin coordinating with oncology specialists
+                                    </li>
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="feature-importance p-4 h-100">
+                            <h4 class="fw-bold mb-3">
+                                <i class="fas fa-chart-bar me-2"></i>Key Analysis Factors
+                            </h4>
+                            <p class="text-muted mb-3">
+                                Primary cellular characteristics considered in this analysis:
+                            </p>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>Nucleus Size & Shape</span>
+                                    <span class="badge bg-primary">High Impact</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-primary" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>Texture Uniformity</span>
+                                    <span class="badge bg-info">Medium Impact</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-info" style="width: 70%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>Perimeter Regularity</span>
+                                    <span class="badge bg-warning">Medium Impact</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" style="width: 65%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>Surface Smoothness</span>
+                                    <span class="badge bg-secondary">Low Impact</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-secondary" style="width: 45%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="text-center mt-5">
+                    <div class="row justify-content-center">
+                        <div class="col-auto">
+                            <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg me-3">
+                                <i class="fas fa-redo me-2"></i>New Analysis
+                            </a>
+                        </div>
+                        <div class="col-auto">
+                            <button onclick="window.print()" class="btn btn-outline-secondary btn-lg me-3">
+                                <i class="fas fa-print me-2"></i>Print Results
+                            </button>
+                        </div>
+                        <div class="col-auto">
+                            <button onclick="downloadResults()" class="btn btn-outline-info btn-lg">
+                                <i class="fas fa-download me-2"></i>Download Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Important Notice -->
+<section class="py-4 bg-warning bg-opacity-10">
+    <div class="container">
+        <div class="alert alert-warning border-0 mb-0">
+            <div class="row align-items-center">
+                <div class="col-md-1 text-center">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem;"></i>
+                </div>
+                <div class="col-md-11">
+                    <h5 class="alert-heading mb-2">Critical Medical Disclaimer</h5>
+                    <p class="mb-2">
+                        <strong>This prediction tool is for educational and research purposes only.</strong> 
+                        Results should never be used as the sole basis for medical decisions.
+                    </p>
+                    <p class="mb-0">
+                        Always consult with qualified healthcare professionals for proper diagnosis, 
+                        treatment planning, and medical care. Early detection and professional medical 
+                        evaluation are crucial for optimal outcomes.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Next Steps -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-12">
+                <h3 class="fw-bold mb-4">What Should You Do Next?</h3>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-phone text-primary mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="card-title">1. Contact Your Doctor</h5>
+                        <p class="card-text text-muted">
+                            Schedule an appointment to discuss these results with your healthcare provider.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-file-medical text-success mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="card-title">2. Share This Report</h5>
+                        <p class="card-text text-muted">
+                            Print or download this report to share with your medical team.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-calendar-check text-info mb-3" style="font-size: 3rem;"></i>
+                        <h5 class="card-title">3. Follow Medical Advice</h5>
+                        <p class="card-text text-muted">
+                            Adhere to your doctor's recommendations for further testing or treatment.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate confidence bar on page load
+    setTimeout(function() {
+        const confidenceFill = document.querySelector('.confidence-fill');
+        if (confidenceFill) {
+            const confidence = confidenceFill.getAttribute('data-confidence');
+            confidenceFill.style.width = confidence + '%';
+        }
+    }, 500);
+
+    // Progress bars animation
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach((bar, index) => {
+        setTimeout(() => {
+            bar.style.width = bar.style.width;
+        }, 1000 + (index * 200));
+    });
+});
+
+function downloadResults() {
+    // Create a simple text report
+    const prediction = '{{ prediction }}';
+    const confidence = '{{ confidence }}';
+    const timestamp = new Date().toLocaleString();
+    
+    const reportContent = `
+BREAST CANCER PREDICTION REPORT
+Generated: ${timestamp}
+
+RESULT: ${prediction}
+CONFIDENCE: ${confidence}%
+
+DISCLAIMER: This report is for educational purposes only. 
+Always consult with healthcare professionals for medical decisions.
+
+For detailed analysis, please refer to the web interface.
+    `;
+    
+    const blob = new Blob([reportContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `breast_cancer_prediction_${new Date().getTime()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// Print-specific styles
+const printStyles = `
+    @media print {
+        .btn, .pulse-animation { display: none !important; }
+        .result-card { break-inside: avoid; }
+        body { font-size: 12px; }
+    }
+`;
+
+const style = document.createElement('style');
+style.textContent = printStyles;
+document.head.appendChild(style);
+</script>
+{% endblock %}
