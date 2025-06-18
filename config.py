@@ -20,7 +20,7 @@ class Config:
     SCALER_PATH = os.environ.get('SCALER_PATH', 'breast_cancer_scaler.pkl')
     
     # Data Processing Configuration
-    MAX_FEATURES = int(os.environ.get('MAX_FEATURES', 10))
+    MAX_FEATURES = 30
     RANDOM_STATE = int(os.environ.get('RANDOM_STATE', 42))
     
     # Machine Learning Configuration
@@ -49,18 +49,7 @@ class Config:
     LOG_FORMAT = '%(asctime)s %(levelname)s %(name)s: %(message)s'
     
     # Feature Names (for documentation/validation)
-    FEATURE_NAMES = [
-        'feature_1',
-        'feature_2', 
-        'feature_3',
-        'feature_4',
-        'feature_5',
-        'feature_6',
-        'feature_7',
-        'feature_8',
-        'feature_9',
-        'feature_10'
-    ]
+    FEATURE_NAMES = [f'feature_{i+1}' for i in range(30)]
     
     # Prediction Configuration
     PREDICTION_THRESHOLD = 0.5

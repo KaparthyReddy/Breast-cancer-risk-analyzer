@@ -1,394 +1,695 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breast Cancer Risk Predictor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Home - Breast Cancer Predictor{% endblock %}
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #1a202c;
+            line-height: 1.6;
+        }
 
-{% block head %}
-<style>
-    .hero-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 80px 0;
-    }
-    .feature-card {
-        transition: transform 0.3s ease;
-        border: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-    .prediction-form {
-        background: #f8f9fa;
-        border-radius: 15px;
-        padding: 30px;
-        margin-top: 40px;
-    }
-    .form-group {
-        margin-bottom: 20px;
-    }
-    .info-tooltip {
-        cursor: help;
-        color: #6c757d;
-    }
-</style>
-{% endblock %}
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
 
-{% block content %}
-<!-- Hero Section -->
-<section class="hero-section">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">
-                    <i class="fas fa-microscope me-3"></i>
-                    Breast Cancer Risk Predictor
-                </h1>
-                <p class="lead mb-4">
-                    Advanced machine learning technology to assess breast cancer risk based on cellular characteristics. 
-                    Get instant predictions to support early detection and medical decision-making.
-                </p>
-                <div class="d-flex gap-3">
-                    <a href="#prediction-form" class="btn btn-light btn-lg px-4">
-                        <i class="fas fa-chart-line me-2"></i>Start Prediction
-                    </a>
-                    <a href="#about" class="btn btn-outline-light btn-lg px-4">
-                        <i class="fas fa-info-circle me-2"></i>Learn More
-                    </a>
-                </div>
-            </div>
-            <div class="col-lg-6 text-center">
-                <i class="fas fa-heartbeat" style="font-size: 200px; opacity: 0.3;"></i>
-            </div>
+        .header-section {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header-section h1 {
+            font-size: 3.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .header-section .subtitle {
+            font-size: 1.3rem;
+            color: #e2e8f0;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .section-header i {
+            margin-right: 0.75rem;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-card {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .input-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .input-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .input-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .input-card label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #2d3748;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-card input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            color: #2d3748;
+        }
+
+        .input-card input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: scale(1.02);
+        }
+
+        .input-card input:valid {
+            border-color: #48bb78;
+        }
+
+        .button-section {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            min-width: 160px;
+            justify-content: center;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn i {
+            margin-right: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .btn-predict {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-predict:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+            box-shadow: 0 8px 20px rgba(245, 101, 101, 0.3);
+        }
+
+        .btn-clear:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(245, 101, 101, 0.4);
+        }
+
+        .btn-sample {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            box-shadow: 0 8px 20px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-sample:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(72, 187, 120, 0.4);
+        }
+
+        .result-section {
+            background: linear-gradient(135deg, #ffffff, #f8fafc);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-top: 2rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: slideInUp 0.6s ease-out;
+        }
+
+        .result-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .result-title.high-risk {
+            color: #e53e3e;
+        }
+
+        .result-title.low-risk {
+            color: #38a169;
+        }
+
+        .result-title i {
+            margin-right: 0.75rem;
+            font-size: 1.5rem;
+        }
+
+        .result-details {
+            background: #f7fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-details strong {
+            color: #2d3748;
+        }
+
+        .feature-summary {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .feature-summary h3 {
+            margin-bottom: 1rem;
+            color: #2d3748;
+            font-size: 1.2rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .feature-item {
+            padding: 0.5rem;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .feature-name {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .feature-value {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+            
+            .header-section h1 {
+                font-size: 2.2rem;
+            }
+            
+            .form-container {
+                padding: 2rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .button-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #5a67d8, #6b46c1);
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header-section">
+            <h1><i class="fas fa-microscope"></i> Breast Cancer Risk Predictor</h1>
+            <p class="subtitle">Advanced AI-powered analysis using 30 clinical features</p>
         </div>
-    </div>
-</section>
 
-<!-- Features Section -->
-<section class="py-5">
-    <div class="container">
-        <div class="row text-center mb-5">
-            <div class="col-12">
-                <h2 class="display-5 fw-bold text-primary mb-3">Why Choose Our Predictor?</h2>
-                <p class="lead text-muted">Advanced AI technology meets medical expertise</p>
-            </div>
-        </div>
-        
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card feature-card h-100 text-center p-4">
-                    <div class="card-body">
-                        <i class="fas fa-brain text-primary mb-3" style="font-size: 3rem;"></i>
-                        <h4 class="card-title">AI-Powered Analysis</h4>
-                        <p class="card-text text-muted">
-                            Utilizing machine learning algorithms trained on comprehensive medical datasets 
-                            for accurate risk assessment.
-                        </p>
-                    </div>
-                </div>
+        <div class="form-container">
+            <div class="section-header">
+                <i class="fas fa-clipboard-list"></i>
+                Clinical Feature Input
             </div>
             
-            <div class="col-md-4">
-                <div class="card feature-card h-100 text-center p-4">
-                    <div class="card-body">
-                        <i class="fas fa-clock text-success mb-3" style="font-size: 3rem;"></i>
-                        <h4 class="card-title">Instant Results</h4>
-                        <p class="card-text text-muted">
-                            Get immediate risk predictions in seconds, enabling quick decision-making 
-                            and timely medical consultations.
-                        </p>
-                    </div>
+            <form id="predictionForm">
+                <div class="form-grid" id="formGrid">
+                    <!-- Inputs will be dynamically generated -->
+                </div>
+                
+                <div class="button-section">
+                    <button type="submit" class="btn btn-predict">
+                        <i class="fas fa-search"></i>
+                        Analyze Risk
+                    </button>
+                    <button type="button" class="btn btn-clear" onclick="clearForm()">
+                        <i class="fas fa-eraser"></i>
+                        Clear All
+                    </button>
+                    <button type="button" class="btn btn-sample" onclick="fillSampleData()">
+                        <i class="fas fa-flask"></i>
+                        Load Sample
+                    </button>
+                </div>
+            </form>
+
+            <div class="loading" id="loadingSection">
+                <div class="spinner"></div>
+                <p>Analyzing data with AI model...</p>
+            </div>
+
+            <div class="result-section" id="resultSection" style="display: none;">
+                <div class="result-title" id="resultTitle"></div>
+                <div class="result-details" id="resultText"></div>
+                <div class="feature-summary">
+                    <h3><i class="fas fa-chart-bar"></i> Feature Summary</h3>
+                    <div class="feature-grid" id="featureSummary"></div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <script>
+        // Feature definitions with categories
+        const featureCategories = {
+            'Mean': [
+                "Mean Radius", "Mean Texture", "Mean Perimeter", "Mean Area", "Mean Smoothness",
+                "Mean Compactness", "Mean Concavity", "Mean Concave Points", "Mean Symmetry", "Mean Fractal Dimension"
+            ],
+            'Standard Error': [
+                "SE Radius", "SE Texture", "SE Perimeter", "SE Area", "SE Smoothness",
+                "SE Compactness", "SE Concavity", "SE Concave Points", "SE Symmetry", "SE Fractal Dimension"
+            ],
+            'Worst': [
+                "Worst Radius", "Worst Texture", "Worst Perimeter", "Worst Area", "Worst Smoothness",
+                "Worst Compactness", "Worst Concavity", "Worst Concave Points", "Worst Symmetry", "Worst Fractal Dimension"
+            ]
+        };
+
+        const allFeatures = [
+            ...featureCategories['Mean'],
+            ...featureCategories['Standard Error'],
+            ...featureCategories['Worst']
+        ];
+
+        // Create input fields with categories
+        const formGrid = document.getElementById('formGrid');
+        let featureIndex = 1;
+
+        Object.entries(featureCategories).forEach(([category, features]) => {
+            features.forEach(feature => {
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'input-group';
+                
+                const inputCard = document.createElement('div');
+                inputCard.className = 'input-card';
+                
+                inputCard.innerHTML = `
+                    <label for="feature_${featureIndex}">${feature}</label>
+                    <input type="number" 
+                           step="any" 
+                           name="feature_${featureIndex}" 
+                           id="feature_${featureIndex}" 
+                           placeholder="Enter value..."
+                           required>
+                `;
+                
+                inputGroup.appendChild(inputCard);
+                formGrid.appendChild(inputGroup);
+                featureIndex++;
+            });
+        });
+
+        // Enhanced form submission with loading states
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('predictionForm');
+            const resultSection = document.getElementById('resultSection');
+            const loadingSection = document.getElementById('loadingSection');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultText = document.getElementById('resultText');
+            const featureSummary = document.getElementById('featureSummary');
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                
+                // Show loading state
+                loadingSection.classList.add('active');
+                resultSection.style.display = 'none';
+                
+                const formData = new FormData(form);
+                const data = {};
+
+                for (let [key, value] of formData.entries()) {
+                    data[key] = parseFloat(value);
+                }
+
+                try {
+                    console.log('Sending data:', data); // Debug log
+                    
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    console.log('Response status:', response.status); // Debug log
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('Result:', result); // Debug log
+
+                    // Hide loading state
+                    loadingSection.classList.remove('active');
+
+                    if (result.error) {
+                        alert("Error: " + result.error);
+                        return;
+                    }
+
+                    // Update result display
+                    const isHighRisk = result.prediction === 'Malignant';
+                    resultTitle.className = `result-title ${isHighRisk ? 'high-risk' : 'low-risk'}`;
+                    resultTitle.innerHTML = `
+                        <i class="fas ${isHighRisk ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i>
+                        ${isHighRisk ? 'High Risk Detected' : 'Low Risk Detected'}
+                    `;
+                    
+                    resultText.innerHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div>
+                                <strong>Prediction:</strong><br>
+                                <span style="color: ${isHighRisk ? '#e53e3e' : '#38a169'}; font-weight: 600;">
+                                    ${result.prediction}
+                                </span>
+                            </div>
+                            <div>
+                                <strong>Confidence:</strong><br>
+                                <span style="color: #667eea; font-weight: 600;">
+                                    ${(result.confidence * 100).toFixed(2)}%
+                                </span>
+                            </div>
+                            <div>
+                                <strong>Analysis Time:</strong><br>
+                                <span style="color: #4a5568;">
+                                    ${result.timestamp || new Date().toLocaleString()}
+                                </span>
+                            </div>
+                            ${result.probability ? `
+                            <div>
+                                <strong>Detailed Probabilities:</strong><br>
+                                <span style="color: #e53e3e;">Malignant: ${(result.probability.malignant * 100).toFixed(1)}%</span><br>
+                                <span style="color: #38a169;">Benign: ${(result.probability.benign * 100).toFixed(1)}%</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+
+                    // Update feature summary
+                    featureSummary.innerHTML = '';
+                    for (let i = 1; i <= 30; i++) {
+                        const input = document.getElementById(`feature_${i}`);
+                        const label = input.previousElementSibling.textContent;
+                        
+                        const featureItem = document.createElement('div');
+                        featureItem.className = 'feature-item';
+                        featureItem.innerHTML = `
+                            <span class="feature-name">${label}</span>
+                            <span class="feature-value">${parseFloat(input.value).toFixed(3)}</span>
+                        `;
+                        featureSummary.appendChild(featureItem);
+                    }
+
+                    resultSection.style.display = 'block';
+                    resultSection.scrollIntoView({ behavior: 'smooth' });
+                    
+                } catch (error) {
+                    loadingSection.classList.remove('active');
+                    alert("Network error: " + error.message);
+                }
+            });
+        });
+
+        function clearForm() {
+            const inputs = document.querySelectorAll('#predictionForm input');
+            inputs.forEach(input => {
+                input.value = '';
+                input.classList.remove('is-valid', 'is-invalid');
+            });
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('loadingSection').classList.remove('active');
+        }
+
+        function fillSampleData() {
+            const sampleData = [
+                17.99, 10.38, 122.8, 1001.0, 0.1184,
+                0.2776, 0.3001, 0.1471, 0.2419, 0.07871,
+                1.095, 0.9053, 8.589, 153.4, 0.006399,
+                0.04904, 0.05373, 0.01587, 0.03003, 0.006193,
+                25.38, 17.33, 184.6, 2019.0, 0.1622,
+                0.6656, 0.7119, 0.2654, 0.4601, 0.1189
+            ];
             
-            <div class="col-md-4">
-                <div class="card feature-card h-100 text-center p-4">
-                    <div class="card-body">
-                        <i class="fas fa-shield-alt text-warning mb-3" style="font-size: 3rem;"></i>
-                        <h4 class="card-title">Secure & Private</h4>
-                        <p class="card-text text-muted">
-                            Your medical data is processed securely with no storage of personal information, 
-                            ensuring complete privacy.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+            for (let i = 1; i <= 30; i++) {
+                const input = document.getElementById(`feature_${i}`);
+                if (input) {
+                    input.value = sampleData[i - 1];
+                    input.classList.add('is-valid');
+                    
+                    // Add a subtle animation to show the field was filled
+                    input.style.transform = 'scale(1.05)';
+                    setTimeout(() => {
+                        input.style.transform = 'scale(1)';
+                    }, 200);
+                }
+            }
+            
+            // Show a brief success message
+            const sampleBtn = document.querySelector('.btn-sample');
+            const originalText = sampleBtn.innerHTML;
+            sampleBtn.innerHTML = '<i class="fas fa-check"></i> Sample Loaded!';
+            sampleBtn.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
+            
+            setTimeout(() => {
+                sampleBtn.innerHTML = originalText;
+                sampleBtn.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
+            }, 2000);
+        }
 
-<!-- Prediction Form Section -->
-<section id="prediction-form" class="py-5 bg-light">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="prediction-form">
-                    <div class="text-center mb-4">
-                        <h2 class="fw-bold text-primary">
-                            <i class="fas fa-calculator me-2"></i>Risk Assessment Tool
-                        </h2>
-                        <p class="text-muted">Enter the cell nucleus measurements below for risk prediction</p>
-                    </div>
-
-                    <form method="POST" action="{{ url_for('predict') }}" id="predictionForm">
-                        <div class="row">
-                            <!-- Mean Values -->
-                            <div class="col-12 mb-4">
-                                <h5 class="text-primary border-bottom pb-2">
-                                    <i class="fas fa-chart-bar me-2"></i>Mean Measurements
-                                </h5>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="radius_mean" class="form-label">
-                                        Radius Mean 
-                                        <i class="fas fa-info-circle info-tooltip" 
-                                           data-bs-toggle="tooltip" 
-                                           title="Mean distance from center to perimeter"></i>
-                                    </label>
-                                    <input type="number" class="form-control" id="radius_mean" 
-                                           name="radius_mean" step="0.01" required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="texture_mean" class="form-label">
-                                        Texture Mean 
-                                        <i class="fas fa-info-circle info-tooltip" 
-                                           data-bs-toggle="tooltip" 
-                                           title="Standard deviation of gray-scale values"></i>
-                                    </label>
-                                    <input type="number" class="form-control" id="texture_mean" 
-                                           name="texture_mean" step="0.01" required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="perimeter_mean" class="form-label">
-                                        Perimeter Mean 
-                                        <i class="fas fa-info-circle info-tooltip" 
-                                           data-bs-toggle="tooltip" 
-                                           title="Mean perimeter of nucleus"></i>
-                                    </label>
-                                    <input type="number" class="form-control" id="perimeter_mean" 
-                                           name="perimeter_mean" step="0.01" required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="area_mean" class="form-label">
-                                        Area Mean 
-                                        <i class="fas fa-info-circle info-tooltip" 
-                                           data-bs-toggle="tooltip" 
-                                           title="Mean area of nucleus"></i>
-                                    </label>
-                                    <input type="number" class="form-control" id="area_mean" 
-                                           name="area_mean" step="0.01" required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="smoothness_mean" class="form-label">
-                                        Smoothness Mean 
-                                        <i class="fas fa-info-circle info-tooltip" 
-                                           data-bs-toggle="tooltip" 
-                                           title="Local variation in radius lengths"></i>
-                                    </label>
-                                    <input type="number" class="form-control" id="smoothness_mean" 
-                                           name="smoothness_mean" step="0.0001" required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="compactness_mean" class="form-label">
-                                        Compactness Mean 
-                                        <i class="fas fa-info-circle info-tooltip" 
-                                           data-bs-toggle="tooltip" 
-                                           title="Perimeter²/area - 1.0"></i>
-                                    </label>
-                                    <input type="number" class="form-control" id="compactness_mean" 
-                                           name="compactness_mean" step="0.0001" required>
-                                </div>
-                            </div>
-
-                            <!-- Standard Error Values -->
-                            <div class="col-12 mb-4 mt-4">
-                                <h5 class="text-primary border-bottom pb-2">
-                                    <i class="fas fa-chart-line me-2"></i>Standard Error Measurements
-                                </h5>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="radius_se" class="form-label">Radius SE</label>
-                                    <input type="number" class="form-control" id="radius_se" 
-                                           name="radius_se" step="0.0001" required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="texture_se" class="form-label">Texture SE</label>
-                                    <input type="number" class="form-control" id="texture_se" 
-                                           name="texture_se" step="0.0001" required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="perimeter_se" class="form-label">Perimeter SE</label>
-                                    <input type="number" class="form-control" id="perimeter_se" 
-                                           name="perimeter_se" step="0.01" required>
-                                </div>
-                            </div>
-
-                            <!-- Worst Values -->
-                            <div class="col-12 mb-4 mt-4">
-                                <h5 class="text-primary border-bottom pb-2">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>Worst Case Measurements
-                                </h5>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="radius_worst" class="form-label">Radius Worst</label>
-                                    <input type="number" class="form-control" id="radius_worst" 
-                                           name="radius_worst" step="0.01" required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="texture_worst" class="form-label">Texture Worst</label>
-                                    <input type="number" class="form-control" id="texture_worst" 
-                                           name="texture_worst" step="0.01" required>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="form-group">
-                                    <label for="perimeter_worst" class="form-label">Perimeter Worst</label>
-                                    <input type="number" class="form-control" id="perimeter_worst" 
-                                           name="perimeter_worst" step="0.01" required>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="text-center mt-4">
-                            <button type="submit" class="btn btn-primary btn-lg px-5" id="predictBtn">
-                                <i class="fas fa-search me-2"></i>Analyze & Predict
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- About Section -->
-<section id="about" class="py-5">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h2 class="display-6 fw-bold text-primary mb-4">About Our Technology</h2>
-                <p class="lead mb-4">
-                    Our breast cancer predictor uses advanced machine learning algorithms trained on 
-                    comprehensive medical datasets to analyze cellular characteristics and assess cancer risk.
-                </p>
-                <div class="row g-3">
-                    <div class="col-6">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success me-3" style="font-size: 1.5rem;"></i>
-                            <span><strong>99%+</strong> Accuracy</span>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success me-3" style="font-size: 1.5rem;"></i>
-                            <span><strong>Instant</strong> Results</span>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success me-3" style="font-size: 1.5rem;"></i>
-                            <span><strong>Secure</strong> Processing</span>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-check-circle text-success me-3" style="font-size: 1.5rem;"></i>
-                            <span><strong>Medical</strong> Grade</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 text-center">
-                <i class="fas fa-dna text-primary" style="font-size: 250px; opacity: 0.1;"></i>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Disclaimer Section -->
-<section class="py-4 bg-warning bg-opacity-10">
-    <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <div class="alert alert-warning border-0 mb-0" role="alert">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-exclamation-triangle me-3" style="font-size: 2rem;"></i>
-                        <div>
-                            <h5 class="alert-heading mb-2">Medical Disclaimer</h5>
-                            <p class="mb-0">
-                                This tool is for educational and research purposes only. Results should not be used as 
-                                a substitute for professional medical advice, diagnosis, or treatment. Always consult 
-                                with qualified healthcare professionals for medical decisions.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-{% endblock %}
-
-{% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-
-    // Form submission with loading overlay
-    document.getElementById('predictionForm').addEventListener('submit', function(e) {
-        document.getElementById('loadingOverlay').classList.remove('d-none');
-        document.getElementById('predictBtn').disabled = true;
-        document.getElementById('predictBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
-    });
-
-    // Smooth scrolling for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
+        // Add input validation feedback
+        document.addEventListener('input', function(e) {
+            if (e.target.type === 'number') {
+                const input = e.target;
+                if (input.value && !isNaN(input.value)) {
+                    input.classList.add('is-valid');
+                    input.classList.remove('is-invalid');
+                } else if (input.value) {
+                    input.classList.add('is-invalid');
+                    input.classList.remove('is-valid');
+                } else {
+                    input.classList.remove('is-valid', 'is-invalid');
+                }
             }
         });
-    });
-});
-</script>
-{% endblock %}
+    </script>
+</body>
+</html>
