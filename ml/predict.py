@@ -194,6 +194,7 @@ class EnhancedBreastCancerPredictor:
                 'prediction': int(prediction),
                 'prediction_label': 'Malignant' if prediction == 0 else 'Benign',
                 'confidence': confidence,
+                'probability': malignant_prob,  # For backward compatibility with Flask app
                 'probabilities': {
                     'malignant': malignant_prob,
                     'benign': benign_prob
@@ -453,6 +454,9 @@ def main():
         
     except Exception as e:
         print(f"Error: {str(e)}")
+
+# Alias for backward compatibility with Flask app
+BreastCancerPredictor = EnhancedBreastCancerPredictor
 
 if __name__ == "__main__":
     main()
