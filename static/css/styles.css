@@ -1,0 +1,106 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f7f9fc;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 960px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #1a1a1a;
+    font-size: 2em;
+}
+
+h1 img {
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.form-grid label {
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.form-grid input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    margin-top: 5px;
+}
+
+.button-row {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.button-row button {
+    margin: 6px;
+    padding: 10px 15px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f2f2f2;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.button-row button:hover {
+    background-color: #ddd;
+}
+
+.confidence-box {
+    margin-top: 20px;
+}
+
+.confidence-bar {
+    width: 100%;
+    height: 24px;
+    background-color: #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.confidence-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    border-radius: 12px;
+}
+
+.bg-success {
+    background-color: #4CAF50;
+}
+
+.bg-danger {
+    background-color: #f44336;
+}
+
+#featureSummary {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}

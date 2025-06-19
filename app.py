@@ -1,142 +1,119 @@
 from flask import Flask, request, jsonify, render_template
-import joblib
-import numpy as np
-import pandas as pd
+from flask_cors import CORS
 from datetime import datetime
+import numpy as np
+import traceback
+import logging
 import os
 
-app = Flask(__name__)
+# Import your custom predictor class
+from ml.predict import BreastCancerPredictor
 
-# Load the trained model and scaler
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+CORS(app)
+
+# Configuration
+app.config['JSON_SORT_KEYS'] = False
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max
+
+# Load the model
+predictor = None
 try:
-    model = joblib.load('breast_cancer_model.pkl')
-    scaler = joblib.load('breast_cancer_scaler.pkl')
-    print("Model and scaler loaded successfully!")
-except FileNotFoundError as e:
-    print(f"Error loading model files: {e}")
-    model = None
-    scaler = None
+    predictor = BreastCancerPredictor(model_path="ml/model.pkl")
+    models_loaded = True
+    logger.info("Model loaded successfully.")
+except Exception as e:
+    logger.error(f"Error loading model: {e}")
+    models_loaded = False
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        'status': 'healthy' if models_loaded else 'model_not_loaded',
+        'models_loaded': models_loaded,
+        'timestamp': datetime.now().isoformat()
+    })
+
 @app.route('/predict', methods=['POST'])
 def predict():
-    if model is None or scaler is None:
-        return jsonify({'error': 'Model not loaded properly'}), 500
-    
+    if not models_loaded or predictor is None:
+        return jsonify({'error': 'Model not loaded'}), 500
+
     try:
-        # Get JSON data from request
-        data = request.get_json()
-        
-        # Add debugging
-        print(f"Received data keys: {list(data.keys()) if data else 'No data'}")
-        print(f"Data type: {type(data)}")
-        print(f"Total fields received: {len(data) if data else 0}")
-        
+        data = request.get_json() or request.form.to_dict()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-        
-        # Extract features in correct order (feature_1 to feature_30)
-        features = []
-        missing_features = []
-        invalid_features = []
-        
-        for i in range(1, 31):
-            feature_key = f'feature_{i}'
-            if feature_key not in data:
-                missing_features.append(feature_key)
-            else:
-                try:
-                    value = data[feature_key]
-                    # Handle different data types
-                    if value is None or value == '':
-                        missing_features.append(feature_key)
-                    else:
-                        float_value = float(value)
-                        # Check for reasonable range (basic validation)
-                        if float_value < 0:
-                            invalid_features.append(f"{feature_key}: negative value ({float_value})")
-                        else:
-                            features.append(float_value)
-                except (ValueError, TypeError) as e:
-                    invalid_features.append(f"{feature_key}: invalid value ({data[feature_key]}) - {str(e)}")
-        
-        # Check for errors
-        if missing_features:
-            return jsonify({
-                'error': f'Missing features: {missing_features}',
-                'received_keys': list(data.keys()),
-                'total_received': len(data)
-            }), 400
-        
-        if invalid_features:
-            return jsonify({
-                'error': f'Invalid features: {invalid_features}'
-            }), 400
-        
-        if len(features) != 30:
-            return jsonify({
-                'error': f'Expected 30 features, got {len(features)}',
-                'missing_count': 30 - len(features),
-                'received_keys': list(data.keys())
-            }), 400
-        
-        print(f"Successfully extracted {len(features)} features")
-        print(f"Feature sample: {features[:5]}...")  # Show first 5 features
-        
-        # Convert to numpy array and reshape
-        features_array = np.array(features).reshape(1, -1)
-        
-        # Scale the features
-        features_scaled = scaler.transform(features_array)
-        
-        # Make prediction
-        prediction_proba = model.predict_proba(features_scaled)[0]
-        prediction = model.predict(features_scaled)[0]
-        
-        # Map prediction to readable format
-        prediction_label = 'Malignant' if prediction == 1 else 'Benign'
-        confidence = max(prediction_proba)
-        
-        # Prepare response
-        response = {
-            'prediction': prediction_label,
-            'confidence': float(confidence),
-            'probability': {
-                'benign': float(prediction_proba[0]),
-                'malignant': float(prediction_proba[1])
-            },
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'features_processed': len(features)
-        }
-        
-        print(f"Prediction successful: {prediction_label} with {confidence:.3f} confidence")
-        
-        return jsonify(response)
-        
-    except ValueError as e:
-        print(f"ValueError: {e}")
-        return jsonify({'error': f'Invalid input data: {str(e)}'}), 400
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'error': f'Prediction error: {str(e)}'}), 500
 
-# Add a test endpoint to debug what's being received
-@app.route('/debug', methods=['POST'])
-def debug():
-    data = request.get_json()
-    return jsonify({
-        'received_data': data,
-        'data_type': str(type(data)),
-        'keys': list(data.keys()) if data else None,
-        'values_sample': {k: v for k, v in list(data.items())[:5]} if data else None,
-        'total_fields': len(data) if data else 0
-    })
+        # Detect key format
+        possible_formats = ['feature_{}', 'feature{}', '{}', 'f{}']
+        working_format = None
+        for fmt in possible_formats:
+            if fmt.format(1) in data:
+                working_format = fmt
+                break
+
+        feature_mapping = {}
+        if not working_format:
+            keys = sorted([k for k in data.keys() if k.replace('_', '').isdigit()])
+            if len(keys) >= 30:
+                for i, k in enumerate(keys[:30]):
+                    feature_mapping[i + 1] = k
+            else:
+                return jsonify({'error': 'Invalid key format', 'expected': possible_formats}), 400
+
+        features = []
+        for i in range(1, 31):
+            key = working_format.format(i) if working_format else feature_mapping[i]
+            val = data.get(key)
+            try:
+                val = float(val)
+                if not np.isfinite(val):
+                    raise ValueError
+                features.append(val)
+            except:
+                return jsonify({'error': f'Invalid or missing value for feature {i}', 'key': key}), 400
+
+        result = predictor.predict(features)
+
+        return jsonify({
+            'success': True,
+            'prediction': result['prediction'],
+            'confidence': result['confidence'],
+            'probability': result['probability'],
+            'metadata': {
+                'timestamp': datetime.now().isoformat(),
+                'model_version': '1.0'
+            }
+        })
+
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        return jsonify({'error': 'Server error', 'details': str(e)}), 500
+
+@app.errorhandler(413)
+def too_large(e):
+    return jsonify({'error': 'File too large'}), 413
+
+@app.errorhandler(400)
+def bad_request(e):
+    return jsonify({'error': 'Bad request', 'message': str(e)}), 400
+
+@app.errorhandler(500)
+def internal_error(e):
+    return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    host = os.environ.get('HOST', '0.0.0.0')
+    debug = os.environ.get('DEBUG', 'True').lower() == 'true'
+
+    logger.info(f"Starting Flask app on {host}:{port} (debug={debug})")
+    app.run(host=host, port=port, debug=debug)

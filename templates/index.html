@@ -330,6 +330,27 @@
             margin: 0 auto 1rem;
         }
 
+        .error-message {
+            background: linear-gradient(135deg, #fed7d7, #feb2b2);
+            border: 1px solid #f56565;
+            color: #c53030;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            font-weight: 500;
+        }
+
+        .demo-mode {
+            background: linear-gradient(135deg, #bee3f8, #90cdf4);
+            border: 1px solid #4299e1;
+            color: #2b6cb0;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            font-weight: 500;
+            text-align: center;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -424,6 +445,10 @@
         </div>
 
         <div class="form-container">
+            <div class="demo-mode">
+                <i class="fas fa-info-circle"></i> Demo Mode - Using simulated ML model for demonstration purposes
+            </div>
+
             <div class="section-header">
                 <i class="fas fa-clipboard-list"></i>
                 Clinical Feature Input
@@ -489,6 +514,45 @@
             ...featureCategories['Worst']
         ];
 
+        // Demo ML model simulation
+        function simulateMLPrediction(features) {
+            // Simulate processing time
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // Simple heuristic based on key features for demo
+                    const meanRadius = features[0];
+                    const meanTexture = features[1];
+                    const meanPerimeter = features[2];
+                    const meanArea = features[3];
+                    const worstRadius = features[20];
+                    const worstArea = features[23];
+                    
+                    // Simple risk score calculation for demo
+                    let riskScore = 0;
+                    if (meanRadius > 15) riskScore += 0.3;
+                    if (meanTexture > 20) riskScore += 0.2;
+                    if (meanPerimeter > 100) riskScore += 0.2;
+                    if (meanArea > 800) riskScore += 0.2;
+                    if (worstRadius > 20) riskScore += 0.4;
+                    if (worstArea > 1500) riskScore += 0.3;
+                    
+                    // Add some randomness for demo
+                    riskScore += (Math.random() - 0.5) * 0.2;
+                    riskScore = Math.max(0, Math.min(1, riskScore));
+                    
+                    const prediction = riskScore > 0.5 ? 'Malignant' : 'Benign';
+                    const confidence = riskScore > 0.5 ? riskScore : (1 - riskScore);
+                    
+                    resolve({
+                        prediction: prediction,
+                        confidence: confidence,
+                        probability: riskScore,
+                        timestamp: new Date().toISOString()
+                    });
+                }, 2000 + Math.random() * 1000); // 2-3 seconds delay
+            });
+        }
+
         // Create input fields with categories
         const formGrid = document.getElementById('formGrid');
         let featureIndex = 1;
@@ -517,7 +581,7 @@
             });
         });
 
-        // Enhanced form submission with loading states
+        // Enhanced form submission with error handling
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('predictionForm');
             const resultSection = document.getElementById('resultSection');
@@ -534,37 +598,39 @@
                 resultSection.style.display = 'none';
                 
                 const formData = new FormData(form);
-                const data = {};
-
-                for (let [key, value] of formData.entries()) {
-                    data[key] = parseFloat(value);
+                const features = [];
+                let hasErrors = false;
+                
+                // Validate and collect features
+                for (let i = 1; i <= 30; i++) {
+                    const value = formData.get(`feature_${i}`);
+                    if (value === null || value === '') {
+                        showError(`Feature ${i} is required`);
+                        hasErrors = true;
+                        break;
+                    }
+                    
+                    const numValue = parseFloat(value);
+                    if (isNaN(numValue) || !isFinite(numValue)) {
+                        showError(`Feature ${i} must be a valid number`);
+                        hasErrors = true;
+                        break;
+                    }
+                    
+                    features.push(numValue);
+                }
+                
+                if (hasErrors) {
+                    loadingSection.classList.remove('active');
+                    return;
                 }
 
                 try {
-                    console.log('Sending data:', data); // Debug log
-                    
-                    const response = await fetch('/predict', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-
-                    console.log('Response status:', response.status); // Debug log
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    console.log('Result:', result); // Debug log
+                    // Use simulated ML model
+                    const result = await simulateMLPrediction(features);
 
                     // Hide loading state
                     loadingSection.classList.remove('active');
-
-                    if (result.error) {
-                        alert("Error: " + result.error);
-                        return;
-                    }
 
                     // Update result display
                     const isHighRisk = result.prediction === 'Malignant';
@@ -591,16 +657,13 @@
                             <div>
                                 <strong>Analysis Time:</strong><br>
                                 <span style="color: #4a5568;">
-                                    ${result.timestamp || new Date().toLocaleString()}
+                                    ${new Date().toLocaleString()}
                                 </span>
                             </div>
-                            ${result.probability ? `
-                            <div>
-                                <strong>Detailed Probabilities:</strong><br>
-                                <span style="color: #e53e3e;">Malignant: ${(result.probability.malignant * 100).toFixed(1)}%</span><br>
-                                <span style="color: #38a169;">Benign: ${(result.probability.benign * 100).toFixed(1)}%</span>
-                            </div>
-                            ` : ''}
+                        </div>
+                        <div style="margin-top: 1rem; padding: 1rem; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                            <strong>Note:</strong> This is a demonstration using a simulated model. 
+                            Real medical predictions require validated models and professional medical consultation.
                         </div>
                     `;
 
@@ -624,10 +687,30 @@
                     
                 } catch (error) {
                     loadingSection.classList.remove('active');
-                    alert("Network error: " + error.message);
+                    showError("Processing error: " + error.message);
                 }
             });
         });
+
+        function showError(message) {
+            // Remove existing error messages
+            const existingErrors = document.querySelectorAll('.error-message');
+            existingErrors.forEach(error => error.remove());
+            
+            // Create new error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            
+            // Insert after form
+            const form = document.getElementById('predictionForm');
+            form.parentNode.insertBefore(errorDiv, form.nextSibling);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
 
         function clearForm() {
             const inputs = document.querySelectorAll('#predictionForm input');
@@ -637,6 +720,10 @@
             });
             document.getElementById('resultSection').style.display = 'none';
             document.getElementById('loadingSection').classList.remove('active');
+            
+            // Remove error messages
+            const errors = document.querySelectorAll('.error-message');
+            errors.forEach(error => error.remove());
         }
 
         function fillSampleData() {
@@ -679,7 +766,7 @@
         document.addEventListener('input', function(e) {
             if (e.target.type === 'number') {
                 const input = e.target;
-                if (input.value && !isNaN(input.value)) {
+                if (input.value && !isNaN(input.value) && isFinite(input.value)) {
                     input.classList.add('is-valid');
                     input.classList.remove('is-invalid');
                 } else if (input.value) {
