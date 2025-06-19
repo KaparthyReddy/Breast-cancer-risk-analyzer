@@ -21,7 +21,7 @@ def preprocess_data(X, y):
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-    return X_train_scaled, X_test_scaled, y_train, y_test, scaler, X.columns.tolist()
+    return X_train_scaled, X_test_scaled, y_train, y_test, scaler, X.columns.tolist(), X_test, y_test
 
 def train_model(X_train, y_train):
     model = RandomForestClassifier(
@@ -49,13 +49,18 @@ def save_model(model, scaler, feature_names, filename='model.pkl'):
     }, os.path.join('ml', filename))
     print(f"Model saved to ml/{filename}")
 
+def save_test_data(X_test, y_test):
+    joblib.dump({'X_test': X_test, 'y_test': y_test}, 'ml/test_data.pkl')
+    print("Test data saved to ml/test_data.pkl")
+
 def main():
     print("Training on real breast cancer dataset...")
     X, y = load_data()
-    X_train, X_test, y_train, y_test, scaler, feature_names = preprocess_data(X, y)
+    X_train, X_test, y_train, y_test, scaler, feature_names, X_test_raw, y_test_raw = preprocess_data(X, y)
     model = train_model(X_train, y_train)
     evaluate_model(model, X_test, y_test)
     save_model(model, scaler, feature_names)
+    save_test_data(X_test_raw, y_test_raw)  # Save raw (unscaled) test data
 
 if __name__ == "__main__":
     main()
